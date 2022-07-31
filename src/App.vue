@@ -19,12 +19,13 @@ const open = (msg) => {
   alert(msg)
 }
 onMounted(() => {
-  // setInterval(() => {
-  //   calcPolygon(
-  //     document.getElementsByClassName('in-dialog')[0],
-  //     document.getElementsByClassName('out')[0]
-  //   )
-  // }, 11990)
+  calcPolygon(
+    document.getElementsByClassName('in-dialog')[0],
+    document.getElementsByClassName('out')[0]
+  )
+  setTimeout(() => {
+    document.getElementsByClassName('in-dialog')[0].style.cssText += `left:130px`
+  }, 3000)
   observable(document.getElementsByClassName('in-dialog')[0])
 })
 function calcPolygon(diffSelector, targetSelector) {
@@ -46,25 +47,29 @@ function observable(targetNode) {
   console.log(targetNode)
 
   // 观察器的配置（需要观察什么变动）
-  const config = { attributes: true, childList: true, subtree: true }
+  const config = { attributes: true, childList: false, subtree: false }
 
-  // 当观察到变动时执行的回调函数
-  const callback = function (mutationsList, observer) {
-    console.log(mutationsList)
-    // Use traditional 'for loops' for IE 11
-    for (let mutation of mutationsList) {
-      if (mutation.type === 'childList') {
-        console.log('A child node has been added or removed.')
-      } else if (mutation.type === 'attributes') {
-        console.log('The ' + mutation.attributeName + ' attribute was modified.')
+  // 当观察到突变时执行的回调函数
+  var callback = function (mutationsList) {
+    console.log(mutationsList, 'mutationsList')
+    mutationsList.forEach(function (item, index) {
+      if (item.type == 'childList') {
+        console.log('有节点发生改变')
+      } else if (item.type == 'attributes') {
+        calcPolygon(
+          document.getElementsByClassName('in-dialog')[0],
+          document.getElementsByClassName('out')[0]
+        )
+      } else if (item.type == 'subtree') {
+        console.log('subtree有变化')
       }
-    }
+    })
   }
 
-  // 创建一个观察器实例并传入回调函数
-  const observer = new MutationObserver(callback)
+  // 创建一个链接到回调函数的观察者实例
+  var observer = new MutationObserver(callback)
 
-  // 以上述配置开始观察目标节点
+  // 开始观察已配置突变的目标节点
   observer.observe(targetNode, config)
 }
 </script>
@@ -81,11 +86,10 @@ function observable(targetNode) {
     width: 150px;
     height: 150px;
     position: absolute;
-    border: 1px solid #000;
     // top: 50%;
     // left: 50%;
     background-color: red;
-    animation: mymove 8s linear infinite;
+    // animation: mymove 8s linear infinite;
   }
 }
 
