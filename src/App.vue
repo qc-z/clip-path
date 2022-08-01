@@ -1,8 +1,8 @@
 <template>
-  <div class="in" @click="open('打开里面最外层')">
-    <div class="in-dialog" @click.stop="open('打开里面的弹窗')">我是里面的</div>
+  <div class="in" @click.stop="open('打开里面的外层')">
+    <div class="in-dialog" ref="el" :style="style" @click.stop="open('打开里面弹窗')"></div>
   </div>
-  <div class="out" @click="open('打开外面最外层')">
+  <div class="out" @click.stop="open('打开外面的外层')">
     <div class="out-img" @click.stop="open('打开外面的弹窗')">
       <img
         id="scream"
@@ -15,43 +15,55 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useDraggable } from '@vueuse/core'
 const open = (msg) => {
-  alert(msg)
+  console.log(msg)
 }
+const el = ref<HTMLElement | null>(null)
+
+const { x, y, style } = useDraggable(el)
 onMounted(() => {
+  const target = <HTMLImageElement>document.getElementsByClassName('in-dialog')[0]
+  const box = document.getElementsByClassName('out')[0]
+  observable(target)
+  console.log(setStyle(box))
+})
+function calcPolygon(target, box) {
+  const { bottom, left, right, top } = target.getBoundingClientRect()
+  const start = ['0 0']
+  const ceter = [
+    `${left}px ${top}px`,
+    `${right}px ${top}px`,
+    `${right}px ${bottom}px`,
+    `${left}px ${bottom}px`,
+    `${left}px ${top}px`
+  ]
+  const end = ['0 0', '0 100%', '100% 100%', '100% 0']
+  const polygon = [...start, ...ceter, ...end].join(',')
+  box.style.cssText += `clip-path: polygon(${polygon})`
+}
+function setStyle(target) {
+  const { bottom, left, right, top } = target.getBoundingClientRect()
+  const polygon = [
+    `${left}px ${top}px`,
+    `${right}px ${top}px`,
+    `${right}px ${bottom}px`,
+    `${left}px ${bottom}px`,
+    `${left}px ${top}px`
+  ]
+  return polygon
+}
+
+function observable(targetNode) {
   calcPolygon(
     document.getElementsByClassName('in-dialog')[0],
     document.getElementsByClassName('out')[0]
   )
-  setTimeout(() => {
-    document.getElementsByClassName('in-dialog')[0].style.cssText += `left:130px`
-  }, 3000)
-  observable(document.getElementsByClassName('in-dialog')[0])
-})
-function calcPolygon(diffSelector, targetSelector) {
-  const { bottom, left, right, top } = diffSelector.getBoundingClientRect()
-  const start = ['0 0', '0 100%']
-  const ceter = [
-    `${left - 1}px ${top - 1}px`,
-    `${right + 1}px ${top - 1}px`,
-    `${right + 1}px ${bottom + 1}px`,
-    `${left - 1}px ${bottom + 1}px`,
-    `${left - 1}px ${top - 1}px`
-  ]
-  const end = ['0 100%', '100% 100%', '100% 0']
-  const polygon = [...start, ...ceter, ...end].join(',')
-  targetSelector.style.cssText += `clip-path: polygon(${polygon})`
-}
-
-function observable(targetNode) {
-  console.log(targetNode)
-
   // 观察器的配置（需要观察什么变动）
   const config = { attributes: true, childList: false, subtree: false }
 
   // 当观察到突变时执行的回调函数
   var callback = function (mutationsList) {
-    console.log(mutationsList, 'mutationsList')
     mutationsList.forEach(function (item, index) {
       if (item.type == 'childList') {
         console.log('有节点发生改变')
@@ -76,8 +88,8 @@ function observable(targetNode) {
 
 <style scoped lang="less">
 .in {
-  width: 100vw;
-  height: 100vh;
+  width: 80vw;
+  height: 80vh;
   position: absolute;
   z-index: 1;
   background-color: green;
@@ -85,6 +97,7 @@ function observable(targetNode) {
   &-dialog {
     width: 150px;
     height: 150px;
+    // border-radius: 50%;
     position: absolute;
     // top: 50%;
     // left: 50%;
