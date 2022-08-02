@@ -26,7 +26,9 @@ onMounted(() => {
   const target = <HTMLImageElement>document.getElementsByClassName('in-dialog')[0]
   const box = document.getElementsByClassName('out')[0]
   observable(target)
-  console.log(setStyle(box))
+  setInterval(() => {
+    target.style.cssText += `left: ${target.offsetLeft + 1}px`
+  }, 100)
 })
 function calcPolygon(target, box) {
   const { bottom, left, right, top } = target.getBoundingClientRect()
@@ -55,15 +57,23 @@ function setStyle(target) {
 }
 
 function observable(targetNode) {
+  console.log(111)
   calcPolygon(
     document.getElementsByClassName('in-dialog')[0],
     document.getElementsByClassName('out')[0]
   )
   // 观察器的配置（需要观察什么变动）
-  const config = { attributes: true, childList: false, subtree: false }
+  const config = {
+    attributes: true,
+    childList: true,
+    subtree: true,
+    attributeOldValue: true,
+    characterDataOldValue: true
+  }
 
   // 当观察到突变时执行的回调函数
   var callback = function (mutationsList) {
+    console.log(mutationsList)
     mutationsList.forEach(function (item, index) {
       if (item.type == 'childList') {
         console.log('有节点发生改变')
@@ -126,22 +136,18 @@ function observable(targetNode) {
 }
 @keyframes mymove {
   0% {
-    left: 50px;
-    top: 50px;
+    left: 0px;
   }
   50% {
-    left: 500px;
-    top: 50px;
+    left: 100px;
   }
 
   75% {
-    left: 500px;
-    top: 100px;
+    left: 200px;
   }
 
   100% {
-    left: 50px;
-    top: 100px;
+    left: 300px;
   }
 }
 </style>
