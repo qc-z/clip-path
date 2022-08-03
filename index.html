@@ -1,13 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + Vue</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>clip-path</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+      font-size: 20px;
+    }
+
+    #in {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      z-index: 1;
+      background: pink;
+    }
+
+    #in-content {
+      width: 200px;
+      height: 200px;
+      position: absolute;
+      background-color: rgb(219, 114, 114);
+      border: 1px solid #000;
+    }
+
+    #out {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #out>* {
+      pointer-events: all;
+    }
+
+    #out-content {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 500px;
+      height: 100%;
+      background-color: green;
+      color: aliceblue;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="in">
+    <div id="in-content">我是里面的内容</div>
+  </div>
+  <div id="out">
+    <div id="out-content">我是外层的内容</div>
+  </div>
+</body>
+
 </html>
+<script>
+  window.onload = function () {
+    // 要显示的目标
+    const target = document.getElementById('in-content')
+    // 要挖洞的容器
+    const box = document.getElementById('out')
+    // 开始观察
+    observable(target, box)
+    // 演示动态改变clip-path
+    setInterval(() => {
+      target.style.cssText += `left: ${target.offsetLeft + 1}px`
+    }, 100)
+  }
+  function calcPolygon(target, box) {
+    // 开始点0,0
+    const start = ['0 0']
+    // document的四个点
+    const end = ['0 0', '0 100%', '100% 100%', '100% 0']
+    const polygon = [...start, ...setStyle(target), ...end].join(',')
+    box.style.cssText += `clip-path: polygon(${polygon})`
+  }
+  function setStyle(target) {
+    const { bottom, left, right, top } = target.getBoundingClientRect()
+    return [
+      `${left}px ${top}px`,
+      `${right}px ${top}px`,
+      `${right}px ${bottom}px`,
+      `${left}px ${bottom}px`,
+      `${left}px ${top}px`
+    ]
+  }
+
+  function observable(target, box) {
+    // 观察器的配置（需要观察什么变动）
+    const config = {
+      // 属性
+      attributes: true,
+      childList: true,
+      subtree: true,
+      attributeOldValue: true,
+      characterDataOldValue: true
+    }
+    // 当观察到突变时执行的回调函数
+    const callback = function () {
+      calcPolygon(target, box)
+    }
+    // 创建一个链接到回调函数的观察者实例
+    const observer = new MutationObserver(callback)
+    // 开始观察已配置突变的目标节点
+    observer.observe(target, config)
+  }
+  // 测试点击事件是否影响
+  const inDom = document.getElementById('in')
+  const inContentDom = document.getElementById('in-content')
+  const outDom = document.getElementById('out')
+  const outContentDom = document.getElementById('out-content')
+  inDom.onclick = function (e) {
+    e.stopPropagation()
+    console.log('打印里面的最底层')
+  }
+  inContentDom.onclick = function (e) {
+    e.stopPropagation()
+    console.log('打印里面内容')
+  }
+  outDom.onclick = function (e) {
+    e.stopPropagation()
+    console.log('打印外层的最底层')
+  }
+  outContentDom.onclick = function (e) {
+    e.stopPropagation()
+    console.log('打印外层的内容')
+  }
+</script>
